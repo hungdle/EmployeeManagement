@@ -1,44 +1,63 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class EmployeeManagementGUI extends JFrame {
-    private JTextArea displayArea;
+    private JTable employeeTable;
+    private DefaultTableModel fullTableModel, concatenatedTableModel;
     private JButton loadButton, concatenateButton, averageSalaryButton, filterButton;
-    private JTextField ageThresholdField;
+    private EmployeeManagementSystem employeeManagementSystem;
+    private JLabel welcomeLabel;
+    private JPanel centerPanel;
 
-    public EmployeeManagementGUI() {
+    public EmployeeManagementGUI(EmployeeManagementSystem employeeManagementSystem) {
+        this.employeeManagementSystem = employeeManagementSystem;
+
         setTitle("Employee Management System");
-        setSize(600, 400);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        // Initialize the full table model with column names
+        fullTableModel = new DefaultTableModel();
+        fullTableModel.setColumnIdentifiers(new String[]{"Name", "Age", "Department", "Salary"});
+
+        // Initialize the concatenated table model with column names
+        concatenatedTableModel = new DefaultTableModel();
+        concatenatedTableModel.setColumnIdentifiers(new String[]{"Name & Department", "Age", "Salary"});
+
+        // Create the JTable with the full table model initially
+        employeeTable = new JTable(fullTableModel);
+
         // Create components
-        displayArea = new JTextArea();
-        displayArea.setEditable(false);
         loadButton = new JButton("Load Employees");
         concatenateButton = new JButton("Concatenate Name & Department");
         averageSalaryButton = new JButton("Calculate Average Salary");
-        filterButton = new JButton("Filter by Age (> 30)");
-        ageThresholdField = new JTextField(10);
+        filterButton = new JButton("Filter by Age");
 
         // Set up layout
         setLayout(new BorderLayout());
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(loadButton);
-        buttonPanel.add(concatenateButton);
-        buttonPanel.add(averageSalaryButton);
-        buttonPanel.add(new JLabel("Age Threshold:"));
-        buttonPanel.add(ageThresholdField);
-        buttonPanel.add(filterButton);
+        // Create an action panel for buttons with GridLayout
+        JPanel actionPanel = new JPanel();
+        actionPanel.setLayout(new GridLayout(4, 1, 10, 10)); // 4 rows, 1 column, with gaps
+        actionPanel.add(loadButton);
+        actionPanel.add(concatenateButton);
+        actionPanel.add(averageSalaryButton);
+        actionPanel.add(filterButton);
 
-        add(new JScrollPane(displayArea), BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
+        // Create center panel with welcome message
+        centerPanel = new JPanel(new BorderLayout());
+        welcomeLabel = new JLabel("Welcome to the Employee Management System", SwingConstants.CENTER);
+        welcomeLabel.setFont(new Font("Serif", Font.BOLD, 24));
+        centerPanel.add(welcomeLabel, BorderLayout.CENTER);
+
+        // Add components to the frame
+        add(actionPanel, BorderLayout.WEST);
+        add(centerPanel, BorderLayout.CENTER);
 
         // Add action listeners
         loadButton.addActionListener(new LoadButtonListener());
@@ -50,54 +69,74 @@ public class EmployeeManagementGUI extends JFrame {
     private class LoadButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            // Load the dataset and display in the text area
-            List<Employee> employees = loadEmployees();
-            displayArea.setText("Employees loaded.\n" + employees.toString());
+            // Load employees and update table with fullTableModel
+            List<Employee> employees = employeeManagementSystem.getEmployees();
+            updateTable(fullTableModel, employees);
+            switchToTableView(fullTableModel);
         }
     }
 
     private class ConcatenateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            List<Employee> employees = loadEmployees();
-            Function<Employee, String> concatFunction = emp -> emp.getName() + " - " + emp.getDepartment();
-            List<String> concatenatedList = employees.stream()
-                    .map(concatFunction)
-                    .collect(Collectors.toList());
-            displayArea.setText("Concatenated Names & Departments:\n" + concatenatedList.toString());
+            // Use the concatenateNameAndDepartment method from EmployeeManagementSystem
+            List<String> concatenatedList = employeeManagementSystem.concatenateNameAndDepartment();
+            List<Employee> employees = employeeManagementSystem.getEmployees();
+            concatenatedTableModel.setRowCount(0); // Clear existing data
+            for (int i = 0; i < employees.size(); i++) {
+                Employee emp = employees.get(i);
+                concatenatedTableModel.addRow(new Object[]{
+                        concatenatedList.get(i),
+                        emp.getAge(),
+                        emp.getSalary()
+                });
+            }
+            switchToTableView(concatenatedTableModel);
         }
     }
 
     private class AverageSalaryButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            List<Employee> employees = loadEmployees();
-            double averageSalary = employees.stream()
-                    .mapToDouble(Employee::getSalary)
-                    .average()
-                    .orElse(0.0);
-            displayArea.setText("Average Salary: " + averageSalary);
+            // Calculate average salary using EmployeeManagementSystem
+            double averageSalary = employeeManagementSystem.calculateAverageSalary();
+            JOptionPane.showMessageDialog(null, "Average Salary: " + averageSalary);
         }
     }
 
     private class FilterButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            int ageThreshold = Integer.parseInt(ageThresholdField.getText());
-            List<Employee> employees = loadEmployees();
-            List<Employee> filteredEmployees = employees.stream()
-                    .filter(emp -> emp.getAge() > ageThreshold)
-                    .collect(Collectors.toList());
-            displayArea.setText("Filtered Employees (Age > " + ageThreshold + "):\n" + filteredEmployees.toString());
+            // Show input dialog to enter age threshold and filter employees
+            String input = JOptionPane.showInputDialog(null, "Enter Age Threshold:");
+            if (input != null && !input.isEmpty()) {
+                int ageThreshold = Integer.parseInt(input);
+                List<Employee> filteredEmployees = employeeManagementSystem.filterEmployeesByAge(ageThreshold);
+                updateTable(fullTableModel, filteredEmployees);
+                switchToTableView(fullTableModel);
+            }
         }
     }
 
-    // Mock method to load employees (replace with actual data loading)
-    private List<Employee> loadEmployees() {
-        return List.of(
-                new Employee("Alice", 30, "Engineering", 70000),
-                new Employee("Bob", 35, "Marketing", 60000),
-                new Employee("Charlie", 40, "HR", 50000)
-        );
+    // Method to update table data
+    private void updateTable(DefaultTableModel tableModel, List<Employee> employees) {
+        tableModel.setRowCount(0); // Clear existing data
+        for (Employee emp : employees) {
+            tableModel.addRow(new Object[]{
+                    emp.getName(),
+                    emp.getAge(),
+                    emp.getDepartment(),
+                    emp.getSalary()
+            });
+        }
+    }
+
+    // Method to switch to table view in center panel
+    private void switchToTableView(DefaultTableModel tableModel) {
+        employeeTable.setModel(tableModel);
+        centerPanel.removeAll();
+        centerPanel.add(new JScrollPane(employeeTable), BorderLayout.CENTER);
+        centerPanel.revalidate();
+        centerPanel.repaint();
     }
 }

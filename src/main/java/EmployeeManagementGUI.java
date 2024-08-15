@@ -5,6 +5,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+/**
+ * A graphical user interface (GUI) for managing employee data.
+ * This class provides a user-friendly interface to interact with an {@link EmployeeManagementSystem}
+ * and perform operations like loading employees, concatenating names and departments,
+ * calculating average salary, and filtering employees by age.
+ */
 public class EmployeeManagementGUI extends JFrame {
     private JTable employeeTable;
     private DefaultTableModel fullTableModel, concatenatedTableModel;
@@ -13,6 +19,11 @@ public class EmployeeManagementGUI extends JFrame {
     private JLabel welcomeLabel;
     private JPanel centerPanel;
 
+    /**
+     * Constructs an EmployeeManagementGUI object, initializing the GUI components and setting up the layout.
+     *
+     * @param employeeManagementSystem The {@link EmployeeManagementSystem} instance to interact with.
+     */
     public EmployeeManagementGUI(EmployeeManagementSystem employeeManagementSystem) {
         this.employeeManagementSystem = employeeManagementSystem;
 
@@ -66,6 +77,10 @@ public class EmployeeManagementGUI extends JFrame {
         filterButton.addActionListener(new FilterButtonListener());
     }
 
+    /**
+     * Private inner class representing the action listener for the "Load Employees" button.
+     * This listener loads the employees from the {@link EmployeeManagementSystem} and updates the table.
+     */
     private class LoadButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -76,6 +91,10 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
+    /**
+     * Private inner class representing the action listener for the "Concatenate Name & Department" button.
+     * This listener concatenates the name and department of each employee and updates the table.
+     */
     private class ConcatenateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -95,6 +114,10 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
+    /**
+     * Private inner class representing the action listener for the "Calculate Average Salary" button.
+     * This listener calculates the average salary of all employees and displays it in a message dialog.
+     */
     private class AverageSalaryButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -104,6 +127,10 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
+    /**
+     * Private inner class representing the action listener for the "Filter by Age" button.
+     * This listener prompts the user to enter an age threshold and filters the employees accordingly.
+     */
     private class FilterButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -118,7 +145,12 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
-    // Method to update table data
+    /**
+     * Updates the data in the given table model with the provided list of employees.
+     *
+     * @param tableModel The {@link DefaultTableModel} to update.
+     * @param employees  The list of {@link Employee} objects to display in the table.
+     */
     private void updateTable(DefaultTableModel tableModel, List<Employee> employees) {
         tableModel.setRowCount(0); // Clear existing data
         for (Employee emp : employees) {
@@ -131,7 +163,11 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
-    // Method to switch to table view in center panel
+    /**
+     * Switches the view in the center panel to display the given table model.
+     *
+     * @param tableModel The {@link DefaultTableModel} to display in the table.
+     */
     private void switchToTableView(DefaultTableModel tableModel) {
         employeeTable.setModel(tableModel);
         centerPanel.removeAll();
